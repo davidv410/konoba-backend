@@ -9,7 +9,11 @@ const db = dbImport.db
 
 app.use(express.json())
 app.use(cors({
-    origin: ['https://konoba-frontend-et7fgjov7-davidv410s-projects.vercel.app', 'http://localhost:5173'],
+    origin: [
+      'https://konoba-frontend.vercel.app',
+      'https://konoba-frontend-et7fgjov7-davidv410s-projects.vercel.app',
+      'http://localhost:5173'
+    ],
     credentials: true,
   }));
 
