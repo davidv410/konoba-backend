@@ -9,10 +9,10 @@ const db = dbImport.db
 
 app.use(express.json())
 app.use(cors())
-// app.use(cors({
-//     origin: 'http://localhost:5173',
-//     credentials: true,
-//   }));
+app.use(cors({
+    origin: process.env.CORSURL,
+    credentials: true,
+  }));
 
 const blogRoute = require('./routes/blogRoute.js')
 app.use('/blog', blogRoute)
