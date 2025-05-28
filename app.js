@@ -8,9 +8,8 @@ const app = express()
 const db = dbImport.db
 
 app.use(express.json())
-app.use(cors())
 app.use(cors({
-    origin: process.env.CORSURL,
+    origin: ['https://your-vercel-domain.vercel.app', 'http://localhost:5173'],
     credentials: true,
   }));
 
