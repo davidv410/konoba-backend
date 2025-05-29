@@ -47,6 +47,6 @@ app.use('/book-table-list', bookTableList)
 const galleryRoute = require('./routes/galleryRoute.js')
 app.use('/gallery-route', galleryRoute)
 
-app.listen(process.env.MYSQLPORT, () => {
+app.listen(process.env.PORT, () => {
     console.log('Server started')
 })
