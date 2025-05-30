@@ -17,7 +17,7 @@ router.post('/', (req, res) => {
     ]
 
     const query = 
-    `INSERT INTO pending_book_a_table (name, email, phone, date, time, people)
+    `INSERT IGNORE INTO pending_book_a_table (name, email, phone, date, time, people)
      VALUES (?, ?, ?, ?, ?, ?)`
     ;
     
