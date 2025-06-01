@@ -13,7 +13,8 @@ router.get('/', (req, res) => {
 
 router.post('/', (req, res) => {
     const { naslov, opis, sadrzaj } = req.body
-    db.query("INSERT INTO `blog_articles`(`title`, `descr`, `content`) VALUES (?, ?, ?)", [naslov, opis, sadrzaj], (err, data) => {
+    const date = new Date()
+    db.query("INSERT INTO `blog_articles`(`date`, `title`, `descr`, `content`) VALUES (?, ?, ?, ?)", [date, naslov, opis, sadrzaj], (err, data) => {
         res.json(data)
     })
 })

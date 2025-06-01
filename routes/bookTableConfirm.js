@@ -8,7 +8,7 @@ const db = dbImport.db
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'vrgy03@gmail.com',
+        user: 'vrgy03@gmail.com', //KONOBIN MAIL
         pass: 'kgjw ljic atux zsql'
     },
     tls: {rejectUnauthorized: false}
@@ -35,7 +35,7 @@ const notifyUser = (name, email, phone, date, time, people, bookingState) => {
 
         mailStructure = {
             from: 'KONOBA IVINA ARKA',
-            to: 'vrgy03@gmail.com', //OVO PROMJENUT
+            to: email,
             subject: 'REZERVACIJA',
             text: `Postovani ${name}. Vaša rezervacija ${dateFormat} u ${timeFormat} za ${people}, je uspjesna. Vidimo se!` // FORMATIRAT DATUM I VRIJEME
         }
@@ -44,7 +44,7 @@ const notifyUser = (name, email, phone, date, time, people, bookingState) => {
 
         mailStructure = {
             from: 'KONOBA IVINA ARKA',
-            to: 'vrgy03@gmail.com', //OVO PROMJENUT
+            to: email, //OVO PROMJENUT
             subject: 'REZERVACIJA',
             text: `Postovani ${name}. Vaša rezervacija ${dateFormat} u ${timeFormat} ,nazalost nije uspjesna.` 
         // FORMATIRAT DATUM I VRIJEME
@@ -55,15 +55,11 @@ const notifyUser = (name, email, phone, date, time, people, bookingState) => {
     transporter.sendMail(mailStructure, (err, data) => {
         if(err){
             console.log(err)
-            return res.status(500).send('Failed to send email');
         }
 
         if(data){
             return console.log('MAIL POSLAN')
         }
-
-        console.error('Nesto crklo');
-        res.status(500).send('Nesto crklo');
     })
 }
 
@@ -112,7 +108,7 @@ router.post('/', (req, res) => {
                     return res.status(500).send('Record removal failed');
                 }
 
-                notifyUser(data[0].name, '', '', data[0].date, data[0].time, '', false); // OVDE DODAT PARAMETRE
+                notifyUser(data[0].name, data[0].email, '', data[0].date, data[0].time, '', false); // OVDE DODAT PARAMETRE
                 res.json({ msg: 'User removed from pending', user: id });
             });
         } else {
