@@ -6,9 +6,11 @@ const router = express.Router()
 router.post('/', (req, res) => {
     res.cookie('token', '', {
         httpOnly: true,
-        expires: new Date(0),
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        expires: new Date(0), // Expire immediately
+        // domain: '.yourdomain.com', // uncomment if you set this on login
+        // path: '/', // add if you set this on login
     });
     res.json({ message: 'Logged out successfully' });
 });
