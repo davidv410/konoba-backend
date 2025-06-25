@@ -30,8 +30,8 @@ router.post('/', (req, res) => {
                 const token = jwt.sign({ username: data[0].username,  role: data[0].role }, accessTokenSecret, { expiresIn: '1h' });
                 res.cookie('token', token, {
                     httpOnly: true,
-                    secure: process.env.NODE_ENV === 'production', // true in production
-                    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-site in prod
+                    secure: true, // true in production
+                    sameSite: 'None', // 'none' for cross-site in prod
                     maxAge: 3600000,
                     // domain: '.yourdomain.com', // optionally set if using subdomains
                 });
