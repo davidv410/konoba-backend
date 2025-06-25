@@ -1,7 +1,3 @@
 .env
-<<<<<<< HEAD
 node_modules
 konoba-images-firebase-adminsdk-fbsvc-4b74ff16f8.json
-=======
-node_modules
->>>>>>> 1f75f7dfe1d7712e559b124c7843cee4234648bf

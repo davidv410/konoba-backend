@@ -2,10 +2,7 @@ const express = require('express')
 const dotenv = require('dotenv').config()
 const dbImport = require('./routes/dbConnection')
 const cors = require('cors')
-<<<<<<< HEAD
 const cookieParser = require('cookie-parser');
-=======
->>>>>>> 1f75f7dfe1d7712e559b124c7843cee4234648bf
 
 
 const app = express()
@@ -13,7 +10,6 @@ const db = dbImport.db
 
 app.use(express.json())
 app.use(cors({
-<<<<<<< HEAD
   origin: [
     'https://konoba-frontend.vercel.app',
     'https://konoba-frontend-et7fgjov7-davidv410s-projects.vercel.app',
@@ -23,15 +19,6 @@ app.use(cors({
 }));
 
 app.use(cookieParser());
-=======
-    origin: [
-      'https://konoba-frontend.vercel.app',
-      'https://konoba-frontend-et7fgjov7-davidv410s-projects.vercel.app',
-      'http://localhost:5173'
-    ],
-    credentials: true,
-  }));
->>>>>>> 1f75f7dfe1d7712e559b124c7843cee4234648bf
 
 const blogRoute = require('./routes/blogRoute.js')
 app.use('/blog', blogRoute)
@@ -63,7 +50,6 @@ app.use('/book-table-list', bookTableList)
 const galleryRoute = require('./routes/galleryRoute.js')
 app.use('/gallery-route', galleryRoute)
 
-<<<<<<< HEAD
 const loginRoute = require('./routes/loginRoute.js')
 app.use('/login', loginRoute)
 
@@ -73,8 +59,6 @@ app.use('/logout', logoutRoute)
 const blogUpdateRoute = require('./routes/blogUpdateRoute.js')
 app.use('/blog-update-route', blogUpdateRoute)
 
-=======
->>>>>>> 1f75f7dfe1d7712e559b124c7843cee4234648bf
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
