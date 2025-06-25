@@ -5,7 +5,7 @@ const db = mysql.createConnection({
     user: process.env.MYSQLUSER, 
     password: process.env.MYSQLPASSWORD,
     database: process.env.MYSQLDATABASE,
-    port: process.env.MYSQLPORT // kad pusham na git ovo mora bit tu kad radim lokalno obrisat
+    port: process.env.PORT // kad pusham na git ovo mora bit tu kad radim lokalno obrisat
 })
 
 db.connect((err) => {
