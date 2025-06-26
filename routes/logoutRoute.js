@@ -8,8 +8,7 @@ router.post('/', (req, res) => {
         httpOnly: true,
         secure: true,
         sameSite: 'None',
-        expires: new Date(0), // Expire immediately
-        domain: '.konobaivinaarka.com'
+        expires: new Date(0), 
     });
     res.json({ message: 'Logged out successfully' });
 });

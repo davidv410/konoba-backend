@@ -32,8 +32,7 @@ router.post('/', (req, res) => {
                     httpOnly: true,
                     secure: true, 
                     sameSite: 'None', 
-                    maxAge: 3600000,
-                    domain: '.konobaivinaarka.com'
+                    maxAge: 3600000
                 });
                 res.json({ login: true });
             }else {
