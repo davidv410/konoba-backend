@@ -30,10 +30,10 @@ router.post('/', (req, res) => {
                 const token = jwt.sign({ username: data[0].username,  role: data[0].role }, accessTokenSecret, { expiresIn: '1h' });
                 res.cookie('token', token, {
                     httpOnly: true,
-                    secure: true, // true in production
-                    sameSite: 'None', // 'none' for cross-site in prod
+                    secure: true, 
+                    sameSite: 'None', 
                     maxAge: 3600000,
-                    // domain: '.yourdomain.com', // optionally set if using subdomains
+                    domain: '.konobaivinaarka.com'
                 });
                 res.json({ login: true });
             }else {

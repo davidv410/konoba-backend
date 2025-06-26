@@ -9,8 +9,7 @@ router.post('/', (req, res) => {
         secure: true,
         sameSite: 'None',
         expires: new Date(0), // Expire immediately
-        // domain: '.yourdomain.com', // uncomment if you set this on login
-        // path: '/', // add if you set this on login
+        domain: '.konobaivinaarka.com'
     });
     res.json({ message: 'Logged out successfully' });
 });
