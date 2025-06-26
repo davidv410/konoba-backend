@@ -7,7 +7,7 @@ router.post('/', (req, res) => {
     res.cookie('token', '', {
         httpOnly: true,
         secure: true,
-        sameSite: 'Lax',
+        sameSite: 'None',
         expires: new Date(0), 
     });
     res.json({ message: 'Logged out successfully' });
