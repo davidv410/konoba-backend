@@ -31,7 +31,7 @@ router.post('/', (req, res) => {
                 res.cookie('token', token, {
                     httpOnly: true,
                     secure: true, 
-                    sameSite: 'None', 
+                    sameSite: 'Lax', 
                     maxAge: 3600000,
                     domain: '.konobaivinaarka.com'
                 });

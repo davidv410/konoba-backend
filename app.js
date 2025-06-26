@@ -11,7 +11,8 @@ const db = dbImport.db
 app.use(express.json())
 app.use(cors({
   origin: [
-    'https://www.konobaivinaarka.com/',
+    'https://konobaivinaarka.com',
+    'https://www.konobaivinaarka.com',
     'http://localhost:5173',
   ],
   credentials: true,
