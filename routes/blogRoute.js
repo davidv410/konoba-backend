@@ -12,7 +12,9 @@ const db = dbImport.db
 
 router.get('/', (req, res) => {
     db.query("SELECT * FROM blog_articles", (err, data) => {
-        res.json(data)
+        if(data){
+            res.json(data)
+        }
     })
 })
 

@@ -117,4 +117,12 @@ router.post('/', (req, res) => {
     })
 })
 
+router.delete('/:id', (req, res) => {
+    const { id } = req.params;
+    db.query("DELETE FROM pending_book_a_table WHERE id = ?", [id], (err, data) => {
+        res.json(data)
+    })
+})
+
+
 module.exports = router
