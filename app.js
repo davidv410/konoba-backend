@@ -59,6 +59,9 @@ app.use('/logout', logoutRoute)
 const blogUpdateRoute = require('./routes/blogUpdateRoute.js')
 app.use('/blog-update-route', blogUpdateRoute)
 
+const healthRoute = require('./routes/healthRoute.js')
+app.use('/health', healthRoute)
+
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
