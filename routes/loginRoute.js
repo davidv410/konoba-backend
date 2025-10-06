@@ -1,33 +1,39 @@
 const express = require('express')
 const jwt = require('jsonwebtoken')
-const dbImport = require('./dbConnection')
+const pool = require('./dbConnection')
 
 const router = express.Router()
 
-const db = dbImport.db
-
-const accessTokenSecret = 'youraccesstokensecret';
-
+const accessTokenSecret = 'youraccesstokensecret'; //<--- LOOOOL
 
 router.get('/', (req, res) => {
     const token = req.cookies.token;
     if(token){
-        const decoded = jwt.verify(token, accessTokenSecret)
-        res.json({ username: decoded.username, role: decoded.role })
-    }else{
+        try {
+            const decoded = jwt.verify(token, accessTokenSecret)
+            res.json({ username: decoded.username, role: decoded.role })
+        } catch (error) {
+            console.error('Invalid token:', error)
+            res.status(401).json({ error: 'Invalid token' })
+        }
+    } else {
         res.json('nista')
     }
 })
 
-router.post('/', (req, res) => {
-
+router.post('/', async (req, res) => {
     const { username, password } = req.body
 
-    db.query("SELECT * FROM users WHERE username = ?", [username], (err, data) => {
+    try {
+        const [data] = await pool.execute("SELECT * FROM users WHERE username = ?", [username])
+        
         if(data.length > 0){
-
             if(data[0].password === password){
-                const token = jwt.sign({ username: data[0].username,  role: data[0].role }, accessTokenSecret, { expiresIn: '1h' });
+                const token = jwt.sign({ 
+                    username: data[0].username,  
+                    role: data[0].role 
+                }, accessTokenSecret, { expiresIn: '1h' });
+                
                 res.cookie('token', token, {
                     httpOnly: true,
                     secure: true, 
@@ -35,32 +41,16 @@ router.post('/', (req, res) => {
                     maxAge: 3600000
                 });
                 res.json({ login: true });
-            }else {
-                res.json('kriva sifra')
+            } else {
+                res.status(401).json({ error: 'kriva sifra' })
             }
-
-        }else{
-            res.json('krivi username')
-            console.log(err)
+        } else {
+            res.status(401).json({ error: 'krivi username' })
         }
-    })
-    
-    // if(password === req.body.password){
-
-    //     const token = jwt.sign({ username: user.username,  role: user.role }, accessTokenSecret, { expiresIn: '1h' });
-        
-    //     res.cookie('token', token, {
-    //         httpOnly: true,
-    //         secure: process.env.NODE_ENV === 'production',
-    //         sameSite: 'strict',
-    //         maxAge: 3600000
-    //     });
-
-    //      res.json({ login: true });
-
-    // }else{
-    //     res.json('kriva sifra')
-    // }
+    } catch (err) {
+        console.error('Database error:', err)
+        res.status(500).json({ error: 'Database error' })
+    }
 })
 
 module.exports = router

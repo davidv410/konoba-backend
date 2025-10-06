@@ -1,20 +1,27 @@
 const express = require('express')
-const dbImport = require('./dbConnection')
+const pool = require('./dbConnection')
 
 const router = express.Router()
-const db = dbImport.db
 
-router.get('/', (req, res) => {
-    db.query("SELECT * FROM book_a_table", (err, data) => {
-        res.json(data)
-    })
+router.get('/', async (req, res) => {
+    try{
+        const [data] = await pool.execute("SELECT * FROM book_a_table")
+         res.json(data)
+    }catch(err){
+        console.error('Error fetching booking:', err)
+        res.status(500).json({ error: 'Failed to fetch booking' })
+    }
 })
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
     const { id } = req.params;
-    db.query("DELETE FROM book_a_table WHERE id = ?", [id], (err, data) => {
-        res.json(data)
-    })
+    try{
+        const [data] = await pool.execute("DELETE FROM book_a_table WHERE id = ?", [id])
+        res.json({ message: 'Booking removed', data });
+    }catch(err){
+        console.error('Error too delete booking:', err)
+        res.status(500).json({ error: 'Error too delete booking' })
+    }
 })
 
 module.exports = router

@@ -1,9 +1,7 @@
 const express = require('express')
 const router = express.Router()
-const dbImport = require('../routes/dbConnection')
+const pool = require('./dbConnection')
 const nodemailer = require('nodemailer')
-
-const db = dbImport.db
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -13,13 +11,6 @@ const transporter = nodemailer.createTransport({
     },
     tls: {rejectUnauthorized: false}
 })
-
-// const mailStructure = {
-//     from: '',
-//     to: '',
-//     subject: '',
-//     text: '',
-// }
 
 const bookingNotification = (email, konoba) => {
     let mailStructure = {
@@ -40,36 +31,22 @@ const bookingNotification = (email, konoba) => {
     })
 }
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
     const { name, email, phone, date, time, people } = req.body
 
-    const VALUES = [
-        name,
-        email,
-        phone,
-        date,
-        time,
-        people
-    ]
-
-    const query = 
-    `INSERT INTO pending_book_a_table (name, email, phone, date, time, people)
-     VALUES (?, ?, ?, ?, ?, ?)`
-    ;
+    const VALUES = [name, email, phone, date, time, people]
+    const query = `INSERT INTO pending_book_a_table (name, email, phone, date, time, people) VALUES (?, ?, ?, ?, ?, ?)`
     
-    db.query(query, VALUES, (err, data) => {
-        if(err){
-            console.error('Error:', err);
-            return res.status(500).json({ error: 'Database error' })
-        }
-
-        if(data){
-            bookingNotification(email, 'konobaivinaarka@gmail.com')
-            return res.json({ message: 'Mail sent' })
-        }
-    })
-
+    try {
+        const [data] = await pool.execute(query, VALUES)
+        
+        bookingNotification(email, 'konobaivinaarka@gmail.com')
+        res.json({ message: 'Mail sent', data })
+        
+    } catch (err) {
+        console.error('Error:', err);
+        res.status(500).json({ error: 'Database error' })
+    }
 })
-
 
 module.exports = router

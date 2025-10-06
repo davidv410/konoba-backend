@@ -1,78 +1,85 @@
 const express = require('express')
-const dbImport = require('./dbConnection')
+const pool = require('./dbConnection')
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const bucket = require('./firebaseConfig');
 
-
 const router = express.Router()
-const db = dbImport.db
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-router.get('/', (req, res) => {
-    db.query("SELECT * FROM gallery", (err, data) => {
+router.get('/', async (req, res) => {
+    try {
+        const [data] = await pool.execute("SELECT * FROM gallery")
         res.json(data)
-    })
+    } catch (err) {
+        console.error('Error fetching gallery:', err)
+        res.status(500).json({ error: 'Failed to fetch gallery' })
+    }
 })
 
 router.post('/', upload.single('image'), async (req, res) => {
-
     const date = new Date();
     let imageUrl = null;
 
-    try{
+    try {
         if (req.file) {
-                const fileExtension = path.extname(req.file.originalname);
-                const originalName = path.basename(req.file.originalname, fileExtension);
-                const firebaseFileName = `${originalName}-${Date.now()}${fileExtension}`;
-        
-                const file = bucket.file(firebaseFileName);
-                await file.save(req.file.buffer, {
-                    metadata: {
-                        contentType: req.file.mimetype,
-                    },
-                });
-        
-                await file.makePublic();
-        
-                imageUrl = file.publicUrl();
+            const fileExtension = path.extname(req.file.originalname);
+            const originalName = path.basename(req.file.originalname, fileExtension);
+            const firebaseFileName = `${originalName}-${Date.now()}${fileExtension}`;
+
+            const file = bucket.file(firebaseFileName);
+            await file.save(req.file.buffer, {
+                metadata: {
+                    contentType: req.file.mimetype,
+                },
+            });
+
+            await file.makePublic();
+            imageUrl = file.publicUrl();
         } else {
             imageUrl = 'https://your-default-image-url.com/default.jpg'; // OVO MORAM PROMJENUT
         }
 
-        db.query("INSERT INTO gallery (image_path) VALUES (?)", [imageUrl], (err, data) => {
-            res.json(data)
-        })
+        const [data] = await pool.execute("INSERT INTO gallery (image_path) VALUES (?)", [imageUrl])
+        res.json(data)
 
-    }catch{
-
+    } catch (error) {
+        console.error('Error uploading to Firebase or inserting data:', error);
+        res.status(500).json({ error: 'Failed to create gallery image' });
     }
 })
 
 router.delete('/:id', async (req, res) => {
     const { id } = req.params
 
-    try{
-        db.query('SELECT * FROM gallery WHERE id = ?', [id], async (err, data) => {
-            if (err) {console.log(err)}
-            if (data.length === 0) { }
-            const imageUrl = data[0].image_path;
-            if (imageUrl && imageUrl.startsWith('https://storage.googleapis.com/')) {
-                const firebaseFileName = imageUrl.split(`${bucket.name}/`).pop();
-                const file = bucket.file(firebaseFileName);
-                await file.delete();
-                console.log(`Deleted file: ${firebaseFileName}`);
-            }
-            db.query("DELETE FROM gallery WHERE id = ?", [id], (err, data) => {
-                if (err) {res.json({ message: 'Failed to delete image', data });}
-                res.json({ message: 'Image deleted successfully', data });
-            })
-        })
-    }catch{
-        console.error('Something went wrong: gallery', error);
-        res.json({ error: 'Something went wrong: gallery' });
+    try {
+        // Get the image URL first
+        const [result] = await pool.execute('SELECT * FROM gallery WHERE id = ?', [id])
+        
+        if (result.length === 0) {
+            return res.status(404).json({ error: 'Gallery image not found' });
+        }
+
+        const imageUrl = result[0].image_path;
+
+        // Delete image from Firebase if it exists
+        if (imageUrl && imageUrl.startsWith('https://storage.googleapis.com/')) {
+            const firebaseFileName = imageUrl.split(`${bucket.name}/`).pop();
+            const file = bucket.file(firebaseFileName);
+            await file.delete();
+            console.log(`Deleted file: ${firebaseFileName}`);
+        }
+
+        // Delete the gallery image from database
+        const [data] = await pool.execute("DELETE FROM gallery WHERE id = ?", [id])
+        
+        res.json({ message: 'Image deleted successfully', data });
+        
+    } catch (error) {
+        console.error('Error deleting gallery image:', error);
+        res.status(500).json({ error: 'Failed to delete gallery image' });
     }
 })
 

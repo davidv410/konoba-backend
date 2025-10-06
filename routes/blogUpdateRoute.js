@@ -1,5 +1,5 @@
 const express = require('express')
-const dbImport = require('./dbConnection')
+const pool = require('./dbConnection')
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -8,28 +8,23 @@ const bucket = require('./firebaseConfig');
 const upload = multer({ storage: multer.memoryStorage() });
 
 const router = express.Router()
-const db = dbImport.db
 
 router.post('/', upload.single('image'), async (req, res) => {
     const { id, title, descr, content } = req.body
 
-    try{
+    try {
+        // Get existing blog data
+        const [existingBlog] = await pool.execute("SELECT image FROM blog_articles WHERE id = ?", [id]);
 
-        //db query
-        const [existingBlog] = await new Promise((resolve, reject) => {
-            db.query("SELECT image FROM blog_articles WHERE id = ?", [id], (err, result) => {
-                if (err) return reject(err);
-                resolve(result);
-            });
-        });
+        if (existingBlog.length === 0) {
+            return res.status(404).json({ error: 'Blog article not found' });
+        }
 
-        const oldImageUrl = existingBlog?.image;
-
+        const oldImageUrl = existingBlog[0]?.image;
         let newImageUrl = oldImageUrl;      
 
-        if(req.file){
-            //upload
-            //delete old
+        if (req.file) {
+            // Upload new image
             const fileExtension = path.extname(req.file.originalname);
             const originalName = path.basename(req.file.originalname, fileExtension);
             const firebaseFileName = `${originalName}-${Date.now()}${fileExtension}`;
@@ -44,27 +39,31 @@ router.post('/', upload.single('image'), async (req, res) => {
             await file.makePublic();
             newImageUrl = file.publicUrl();
 
-            if (oldImageUrl) {
+            // Delete old image if it exists
+            if (oldImageUrl && oldImageUrl.startsWith('https://storage.googleapis.com/')) {
                 const oldFirebaseFileName = oldImageUrl.split(`${bucket.name}/`).pop();
                 const oldFile = bucket.file(oldFirebaseFileName);
-                const radi = await oldFile.delete();
+                await oldFile.delete();
+                console.log(`Deleted old file: ${oldFirebaseFileName}`);
             }
         }
 
-        db.query("UPDATE blog_articles SET title = ?, descr = ?, content = ?, image = ? WHERE id = ?", [title, descr, content, newImageUrl,id], (err, data) => {
-            if(err){
-                console.log(err)
-            }else{
-                console.log(data)
-                res.json('blog updated')
-            }
-        })
+        // Update blog article
+        const [data] = await pool.execute(
+            "UPDATE blog_articles SET title = ?, descr = ?, content = ?, image = ? WHERE id = ?", 
+            [title, descr, content, newImageUrl, id]
+        );
 
-    }catch{
+        if (data.affectedRows === 0) {
+            return res.status(404).json({ error: 'Blog article not found' });
+        }
 
+        res.json({ message: 'Blog updated successfully', data });
+
+    } catch (error) {
+        console.error('Error updating blog:', error);
+        res.status(500).json({ error: 'Failed to update blog article' });
     }
-
-
-})
+});
 
 module.exports = router

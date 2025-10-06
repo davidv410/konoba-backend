@@ -1,11 +1,9 @@
 const express = require('express')
-const dbImport = require('./dbConnection')
+const pool = require('./dbConnection')
 
 const router = express.Router()
-const db = dbImport.db
 
-router.get('/', (req, res) => {
-
+router.get('/', async (req, res) => {
     const query = `SELECT 
             menu_items.id, 
             menu_items.name, 
@@ -18,70 +16,70 @@ router.get('/', (req, res) => {
         LEFT JOIN subgroups ON menu_items.subgroup_id = subgroups.id
         LEFT JOIN meat_type ON menu_items.id = meat_type.menu_item_id
         GROUP BY menu_items.id
-        ORDER BY meat_count DESC, subgroups.id
-       `
-    
-    db.query(query, (err, data) => {
-        if (err) {
-            return res.status(500).json({ error: err.message })
-        }
+        ORDER BY meat_count DESC, subgroups.id`
         
-        res.json(data);
-           
-    })
+    try {
+        const [data] = await pool.execute(query)
+        res.json(data)
+    } catch (err) {
+        console.error('Error fetching menu items:', err)
+        res.status(500).json({ error: 'Failed to fetch menu items' })
+    }
 })
 
-router.post('/', (req, res) => {
-
+router.post('/', async (req, res) => {
     const query = `INSERT INTO menu_items(name, price, description, menu_id, subgroup_id) VALUES (?,?,?,?,?)`
     const { menuItem, meatArr } = req.body;
 
     let subgroup_id = menuItem.subgroup_id
-    if(!subgroup_id || subgroup_id === ""){
+    if (!subgroup_id || subgroup_id === "") {
         subgroup_id = null;
     }
 
     let price = menuItem.price
-    if(meatArr && meatArr.length > 0){
+    if (meatArr && meatArr.length > 0) {
         price = null
-    }else{
+    } else {
         price = menuItem.price
     }
 
-    if(menuItem && Object.keys(menuItem).length > 0){
-        db.query(query, [menuItem.name, price, menuItem.descr, menuItem.menu_id, subgroup_id], (err, data) => {
-            if(data){
-                const menuItemId = data.insertId;
-                            if(meatArr && meatArr.length > 0){
-                                    const query = `INSERT INTO meat_type(meat, price, menu_item_id) VALUES (?,?,?)`
-                                    meatArr.forEach(item => {
-                                        db.query(query, [item.meat, item.price, menuItemId], (err, data) => {
-                                            if(data){
-                                                console.log(data)
-                                            }else{
-                                                console.log(err)
-                                            }
-                                        })
-                                    });
-                            }
-                res.json(data)
-            }else{
-                console.log(err)
-            }
-        })
+    try {
+        if (menuItem && Object.keys(menuItem).length > 0) {
+            const [data] = await pool.execute(query, [menuItem.name, price, menuItem.descr, menuItem.menu_id, subgroup_id])
+            const menuItemId = data.insertId;
 
+            if (meatArr && meatArr.length > 0) {
+                const meatQuery = `INSERT INTO meat_type(meat, price, menu_item_id) VALUES (?,?,?)`
+                
+                // Insert all meat types
+                for (const item of meatArr) {
+                    await pool.execute(meatQuery, [item.meat, item.price, menuItemId])
+                }
+            }
+            
+            res.json(data)
+        }
+    } catch (err) {
+        console.error('Error creating menu item:', err)
+        res.status(500).json({ error: 'Failed to create menu item' })
     }
 })
 
 router.delete('/:id', async (req, res) => {
     const { id } = req.params
 
-    db.query("DELETE FROM menu_items WHERE id = ?", [id], (err, data) => {
-        if (err) {res.json({ message: 'Failed to delete item', data });}
-        res.json({ message: 'Item deleted successfully', data });
-    })
-
-
+    try {
+        const [data] = await pool.execute("DELETE FROM menu_items WHERE id = ?", [id])
+        
+        if (data.affectedRows === 0) {
+            return res.status(404).json({ message: 'Menu item not found' })
+        }
+        
+        res.json({ message: 'Item deleted successfully', data })
+    } catch (err) {
+        console.error('Error deleting menu item:', err)
+        res.status(500).json({ error: 'Failed to delete menu item' })
+    }
 })
 
 module.exports = router

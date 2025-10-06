@@ -1,13 +1,16 @@
 const express = require('express')
-const dbImport = require('./dbConnection')
+const pool = require('./dbConnection')
 
 const router = express.Router()
-const db = dbImport.db
 
-router.get('/', (req, res) => {
-    db.query("SELECT * FROM meat_type", (err, data) => {
-        res.send(data)
-    })
+router.get('/', async (req, res) => {
+    try{
+        const [data] = await pool.execute("SELECT * FROM meat_type")
+        res.json(data)
+    }catch(err){
+        console.error('Error fetching meat types:', err)
+        res.status(500).json({ error: 'Failed to fetch meat types' })
+    }
 })
 
 module.exports = router

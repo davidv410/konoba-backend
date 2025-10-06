@@ -1,16 +1,24 @@
-const mysql = require('mysql2')
+const mysql = require('mysql2/promise')
 
-const db = mysql.createConnection({
-    host: process.env.MYSQLHOST,
+const pool = mysql.createPool({
+    host: process.env.MYSQLHOST || 'localhost',
     user: process.env.MYSQLUSER, 
     password: process.env.MYSQLPASSWORD,
     database: process.env.MYSQLDATABASE,
-    port: process.env.PORT // kad pusham na git ovo mora bit tu kad radim lokalno obrisat
+    port: process.env.PORT, // kad pusham na git ovo mora bit tu kad radim lokalno obrisat
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 })
 
-db.connect((err) => {
-    if(err){return console.log(err)}
-    console.log('Database connected')
-})
+pool.getConnection()
+    .then(connection => {
+        console.log('Database connected')
+        connection.release()
+    })
+    .catch(err => {
+        console.error('Database connection failed:', err)
+        console.error('Make sure MySQL is running and environment variables are set')
+    })
 
-exports.db = db
+module.exports = pool
