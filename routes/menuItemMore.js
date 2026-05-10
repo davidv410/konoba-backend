@@ -1,15 +1,14 @@
 const express = require('express')
-const pool = require('./dbConnection')
+const MenuMoreModel = require('../models/MenuMoreModel')
 
 const router = express.Router()
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
     try{
-        const [data] = await pool.execute("SELECT * FROM meat_type")
+        const data = await MenuMoreModel.getData()
         res.json(data)
     }catch(err){
-        console.error('Error fetching meat types:', err)
-        res.status(500).json({ error: 'Failed to fetch meat types' })
+       next(err)
     }
 })
 

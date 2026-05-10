@@ -1,15 +1,24 @@
 const express = require('express')
-const pool = require('./dbConnection')
-
 const router = express.Router()
+const MenuModel = require('../models/MenuModel')
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
     try{
-        const [data] = await pool.execute("SELECT * FROM menus")
+        const data = await MenuModel.getData()
         res.json(data)
     }catch(err){
-        console.error('Error fetching menus:', err)
-        res.status(500).json({ error: 'Failed to fetch menus' })
+        next(err)
+    }
+})
+
+router.patch('/:id', async (req, res, next) => {
+    const { id } = req.params
+    const { name } = req.body
+    try{
+        const update = await MenuModel.updateData(name, id)
+        res.json({msg: 'patch success'})
+    }catch(err){
+        next(err)
     }
 })
 

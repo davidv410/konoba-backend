@@ -1,26 +1,23 @@
 const express = require('express')
-const pool = require('./dbConnection')
-
+const BookTableModel = require('../models/BookTableModel')
 const router = express.Router()
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
     try{
-        const [data] = await pool.execute("SELECT * FROM book_a_table")
-         res.json(data)
+        const data = await BookTableModel.getBookedData()
+        res.json(data)
     }catch(err){
-        console.error('Error fetching booking:', err)
-        res.status(500).json({ error: 'Failed to fetch booking' })
+        next(err)
     }
 })
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', async (req, res, next) => {
     const { id } = req.params;
     try{
-        const [data] = await pool.execute("DELETE FROM book_a_table WHERE id = ?", [id])
+        const data = await BookTableModel.deleteBookedData(id)
         res.json({ message: 'Booking removed', data });
     }catch(err){
-        console.error('Error too delete booking:', err)
-        res.status(500).json({ error: 'Error too delete booking' })
+        next(err)
     }
 })
 

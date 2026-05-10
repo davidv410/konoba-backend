@@ -1,112 +1,68 @@
 const express = require('express')
-const pool = require('./dbConnection')
-const nodemailer = require('nodemailer')
-
+const BookTableModel = require('../models/BookTableModel')
+const emailService = require('../utils/emailService')
 const router = express.Router()
 
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL,
-        pass: process.env.EMAIL_PASS
-    },
-    tls: {rejectUnauthorized: false}
-})
-
-const notifyUser = (name, email, phone, date, time, people, bookingState) => {
-    let mailStructure
-    
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
-    let dateFormat = new Date(date).toLocaleDateString('en-US', options);
-
-    const [hours, minutes] = time.split(":");
-    let timeFormat = `${hours}:${minutes}`
-
+const notifyUser = async (name, email, phone, date, time, people, bookingState) => {
     if(bookingState === true) {
-        mailStructure = {
-            from: 'KONOBA IVINA ARKA',
-            to: email,
-            subject: 'REZERVACIJA',
-            text: `Postovani ${name}. Vaša rezervacija ${dateFormat} u ${timeFormat} za ${people}, je uspjesna. Vidimo se!`
-        }
-    } else if (bookingState === false) {
-        mailStructure = {
-            from: 'KONOBA IVINA ARKA',
-            to: email,
-            subject: 'REZERVACIJA',
-            text: `Postovani ${name}. Vaša rezervacija ${dateFormat} u ${timeFormat} ,nazalost nije uspjesna.`
-        }
+        await emailService.sendBookingConfirmation(name, email, phone, date, time, people)
+        return
+    }  
+    if (bookingState === false) {
+        await emailService.sendBookingRejection(name, email, phone, date, time, people)
+        return
     }
 
-    transporter.sendMail(mailStructure, (err, data) => {
-        if(err){
-            console.log(err)
-        }
-        if(data){
-            return console.log('MAIL POSLAN')
-        }
-    })
 }
 
-router.get('/', async (req, res) => {
+router.get('/', async (req, res, next) => {
     try {
-        const [data] = await pool.execute("SELECT * FROM pending_book_a_table")
+        const data = await BookTableModel.getBookingsData()
         res.json(data)
     } catch (err) {
-        console.error('Error fetching pending bookings:', err)
-        res.status(500).json({ error: 'Failed to fetch pending bookings' })
+        next(err)
     }
 })
 
-router.post('/', async (req, res) => {
+router.post('/', async (req, res, next) => {
     const { id, decision } = req.body
 
     try {
-        const [data] = await pool.execute("SELECT * FROM pending_book_a_table WHERE id = ?", [id])
+        const data = await BookTableModel.getBookingData(id)
         
-        if (data.length === 0) {
-            return res.status(404).json({ error: 'Booking not found' })
-        }
+        if (data.length === 0) { return res.status(404).json({ error: 'Booking not found' }) }
 
         if(decision === 'insert'){
-            const query = `INSERT INTO book_a_table (name, email, phone, date, time, people) VALUES (?, ?, ?, ?, ?, ?)`
-            const VALUES = [data[0].name, data[0].email, data[0].phone, data[0].date, data[0].time, data[0].people]
-    
-            await pool.execute(query, VALUES)
-            console.log('Added to book a table');
+            const insert = await BookTableModel.insertBooking(data[0].name, data[0].email, data[0].phone, data[0].date, data[0].time, data[0].people)
+            const deletePending = await BookTableModel.deletePending(id)
             notifyUser(data[0].name, data[0].email, data[0].phone, data[0].date, data[0].time, data[0].people, true);
-
-            await pool.execute("DELETE FROM pending_book_a_table WHERE id = ?", [id])
             res.json({ msg: 'User added and email sent', user: id });
+            return
 
-        } else if(decision === 'delete'){
-            await pool.execute("DELETE FROM pending_book_a_table WHERE id = ?", [id])
+        }
+
+        if(decision === 'delete'){
+            const deletePending = await BookTableModel.deletePending(id)
             notifyUser(data[0].name, data[0].email, '', data[0].date, data[0].time, '', false);
             res.json({ msg: 'User removed from pending', user: id });
-            
-        } else {
-            res.status(400).json({ error: 'Invalid decision' });
+            return
         }
+
+        res.status(400).json({ error: 'Invalid decision' });
+
     } catch (err) {
-        console.error('Error processing booking:', err)
-        res.status(500).json({ error: 'Failed to process booking' })
+        next(err)
     }
 })
 
 router.delete('/:id', async (req, res) => {
     const { id } = req.params;
-    
     try {
-        const [data] = await pool.execute("DELETE FROM pending_book_a_table WHERE id = ?", [id])
-        
-        if (data.affectedRows === 0) {
-            return res.status(404).json({ message: 'Booking not found' })
-        }
-        
-        res.json({ message: 'Booking deleted successfully', data })
+        const deletePending = await BookTableModel.deletePending(id)
+        if (deletePending.affectedRows === 0) { return res.status(404).json({ message: 'Booking not found' })}
+        res.json({ message: 'Booking deleted successfully', deletePending })
     } catch (err) {
-        console.error('Error deleting booking:', err)
-        res.status(500).json({ error: 'Failed to delete booking' })
+        next(err)
     }
 })
 

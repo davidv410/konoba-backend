@@ -3,7 +3,7 @@ const dotenv = require('dotenv').config()
 const dbImport = require('./routes/dbConnection')
 const cors = require('cors')
 const cookieParser = require('cookie-parser');
-
+const errorHandler = require('./middleware/errorHandler.js');
 
 const app = express()
 const db = dbImport.db
@@ -59,8 +59,13 @@ app.use('/logout', logoutRoute)
 const blogUpdateRoute = require('./routes/blogUpdateRoute.js')
 app.use('/blog-update-route', blogUpdateRoute)
 
-const healthRoute = require('./routes/healthRoute.js')
+const healthRoute = require('./routes/healthRoute.js');
 app.use('/health', healthRoute)
+
+const userRoute = require('./routes/userRoute')
+app.use('/user', userRoute)
+
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 5000;
 
