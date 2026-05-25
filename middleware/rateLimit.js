@@ -6,7 +6,6 @@ const limiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false, 
     ipv6Subnet: 56,
-    trustProxy: true,
     handler: (req, res) => {
     console.error(
       `Rate limit exceeded: ${req.ip} ${req.originalUrl}`
