@@ -10,14 +10,19 @@ const transporter = nodemailer.createTransport({
 })
 
 const sendContactEmail = async (name, email, phone, message) => {
-    const mailStructure = { 
-        from: email,
-        to: process.env.EMAIL, 
-        subject: `KONTAKT`,
-        text: `${name} (${email} - ${phone})
-        ${message}` 
+    try{
+        const mailStructure = { 
+            from: email,
+            to: process.env.EMAIL, 
+            subject: `KONTAKT`,
+            text: `${name} (${email} - ${phone})
+            ${message}` 
+        }
+        return transporter.sendMail(mailStructure)
+    }catch(err){
+        console.error("SMTP ERROR:", err);
+        throw err;
     }
-    return transporter.sendMail(mailStructure)
 }
 
 const sendBookingConfirmation = async (name, email, phone, date, time, people) => {
