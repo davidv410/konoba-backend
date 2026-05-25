@@ -1,8 +1,9 @@
 const express = require('express')
 const router = express.Router()
 const emailService = require('../utils/emailService')
+const limiter = require('../middleware/rateLimit')
 
-router.post('/', async (req, res, next) => {
+router.post('/', limiter, async (req, res, next) => {
     try{
         const { name, email, phone, message } = req.body
         await emailService.sendContactEmail(name,email,phone,message)

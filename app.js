@@ -19,6 +19,7 @@ app.use(cors({
 }));
 
 app.use(cookieParser());
+app.set("trust proxy", 1);
 
 const blogRoute = require('./routes/blogRoute.js')
 app.use('/blog', blogRoute)
