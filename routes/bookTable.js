@@ -4,7 +4,7 @@ const BookTableModel = require('../models/BookTableModel')
 const emailService = require('../utils/emailService')
 const limiter = require('../middleware/rateLimit')
 
-router.post('/', limiter, async (req, res, next) => {
+router.post('/', async (req, res, next) => {
     const { name, email, phone, date, time, people } = req.body
     try {
         const data = await BookTableModel.insertPending(name, email, phone, date, time, people)
